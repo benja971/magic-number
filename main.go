@@ -1,40 +1,98 @@
 package main
 
 import (
-	"fmt"
 	"math/rand/v2"
+	"strconv"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	const maxGuessCount = 5
-	goal := rand.IntN(100)
-	guessCount := 0
-	var guess int
 
-	for guessCount < maxGuessCount {
-		guessesLeft := maxGuessCount - guessCount
-		fmt.Printf("You have %d guesses left\n", guessesLeft)
-		fmt.Print("Your guess: ")
+	// gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.DebugMode)
+	router := gin.Default()
 
-		_, err := fmt.Scanf("%d", &guess)
-		if err != nil {
-			fmt.Println("Please enter a valid number")
-			continue // Don't count invalid inputs
-		}
+	goal := -1
 
-		guessCount++
+	router.POST("/goal", func(c *gin.Context) {
 
-		if guess > goal {
-			fmt.Println("Too high")
-		} else if guess < goal {
-			fmt.Println("Too low")
-		} else {
-			fmt.Printf("You won! The number was %d\n", goal)
+		goal = rand.IntN(100)
+
+		c.Status(200)
+	})
+
+	router.GET("/goal", func(c *gin.Context) {
+
+		if goal == -1 {
+			c.JSON(400, gin.H{
+				"error": "goal not set",
+			})
 			return
 		}
 
-		fmt.Println() // Add a blank line between guesses
-	}
+		c.JSON(200, gin.H{
+			"goal": goal,
+		})
+	})
 
-	fmt.Printf("Sorry, you lost. The number was %d\n", goal)
+	router.GET("/goal/:guess", func(c *gin.Context) {
+		if goal == -1 {
+			c.JSON(400, gin.H{
+				"error": "goal not set",
+			})
+			return
+		}
+
+		guess := c.Param("guess")
+		if guess == "" {
+			c.JSON(400, gin.H{
+				"error": "guess not set",
+			})
+			return
+		}
+
+		guessInt, err := strconv.Atoi(guess)
+
+		if err != nil {
+			c.JSON(400, gin.H{
+				"error": "guess not a number",
+			})
+			return
+		}
+
+		if guessInt < 0 || guessInt > 100 {
+			c.JSON(400, gin.H{
+				"error": "guess out of range",
+			})
+			return
+		}
+
+		if guessInt < goal {
+			c.JSON(200, gin.H{
+				"message": "guess too low",
+			})
+			return
+		}
+
+		if guessInt > goal {
+			c.JSON(200, gin.H{
+				"message": "guess too high",
+			})
+			return
+		}
+
+		if guessInt == goal {
+
+			// reset goal
+			goal = -1
+
+			c.JSON(200, gin.H{
+				"message": "guess correct",
+			})
+			return
+		}
+	})
+
+	router.Run("localhost:8080")
+
 }
