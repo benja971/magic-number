@@ -8,6 +8,7 @@ import (
 )
 
 var goal = -1
+var remainingGuesses = 10
 
 func main() {
 
@@ -25,8 +26,11 @@ func main() {
 
 func handleSetGoal(c *gin.Context) {
 	goal = rand.IntN(100)
+	remainingGuesses = 10
 
-	c.Status(200)
+	c.JSON(201, gin.H{
+		"message": "goal set",
+	})
 }
 
 func handleGetGoal(c *gin.Context) {
@@ -68,23 +72,31 @@ func handleMakeGuess(c *gin.Context) {
 		return
 	}
 
+	remainingGuesses--
+
 	if guessInt < 0 || guessInt > 100 {
 		c.JSON(400, gin.H{
-			"error": "guess out of range",
+			"error":            "guess out of range",
+			"guess":            guessInt,
+			"remainingGuesses": remainingGuesses,
 		})
 		return
 	}
 
 	if guessInt < goal {
 		c.JSON(200, gin.H{
-			"message": "guess too low",
+			"message":          "guess too low",
+			"guess":            guessInt,
+			"remainingGuesses": remainingGuesses,
 		})
 		return
 	}
 
 	if guessInt > goal {
 		c.JSON(200, gin.H{
-			"message": "guess too high",
+			"message":          "guess too high",
+			"guess":            guessInt,
+			"remainingGuesses": remainingGuesses,
 		})
 		return
 	}
@@ -93,9 +105,12 @@ func handleMakeGuess(c *gin.Context) {
 
 		// reset goal
 		goal = -1
+		remainingGuesses = 10
 
 		c.JSON(200, gin.H{
-			"message": "guess correct",
+			"message":          "guess correct",
+			"guess":            guessInt,
+			"remainingGuesses": remainingGuesses,
 		})
 		return
 	}
