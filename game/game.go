@@ -2,54 +2,60 @@
 package game
 
 import (
-	"slices"
+	"example/guess_number/player"
 
 	"github.com/google/uuid"
 )
 
 type Game struct {
-	ID         uuid.UUID `json:"id"`
-	Goal       int       `json:"goal"`
-	Guesses    []int     `json:"guesses"`
-	MaxGuesses int       `json:"max_guesses"`
+	ID         uuid.UUID       `json:"id"`
+	Goal       int             `json:"goal"`
+	MaxGuesses int             `json:"max_guesses"`
+	Players    []player.Player `json:"players"`
+	StartedAt  int64           `json:"started_at"`
 }
 
-func (g Game) IsOver() bool {
-	return len(g.Guesses) >= g.MaxGuesses
+func (g Game) IsCorrectGuess(guess int) bool {
+	return guess == g.Goal
 }
 
-func (g Game) IsWon() bool {
-	return g.Goal == g.Guesses[len(g.Guesses)-1]
+func (g Game) HasPlayerLost(player *player.Player) bool {
+	return len(player.Guesses) >= g.MaxGuesses
 }
 
-func (g Game) IsLost() bool {
-	return len(g.Guesses) >= g.MaxGuesses && g.Goal != g.Guesses[len(g.Guesses)-1]
+func (g Game) HasPlayerWon(player *player.Player) bool {
+	return player.IsGuessAlreadyMade(g.Goal)
 }
 
 func (g Game) IsValidGuess(guess int) bool {
 	return guess >= 1 && guess <= 100
 }
 
-func (g Game) IsGuessAlreadyMade(guess int) bool {
-	return slices.Contains(g.Guesses, guess)
-}
-
-func (g *Game) AppendGuess(guess int) {
-	g.Guesses = append(g.Guesses, guess)
-}
-
-func (g Game) GetRemainingGuesses() int {
-	return g.MaxGuesses - len(g.Guesses)
+func (g Game) GetRemainingGuesses(player *player.Player) int {
+	return g.MaxGuesses - len(player.Guesses)
 }
 
 func (g Game) IsGuessTooHigh(guess int) bool {
 	return guess > g.Goal
 }
 
+func (g Game) IsStarted() bool {
+	return g.StartedAt != 0
+}
+
+func (g Game) IsNameTaken(name string) bool {
+	for _, p := range g.Players {
+		if p.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
 type GameResponse struct {
 	ID         uuid.UUID `json:"id"`
-	Guesses    []int     `json:"guesses"`
 	MaxGuesses int       `json:"max_guesses"`
+	Players    []string  `json:"players"`
 }
 
 var games []Game

@@ -22,9 +22,10 @@ func FindGameHandler(c *gin.Context) {
 
 	gameResponse := GameResponse{
 		ID:         game.ID,
-		Guesses:    game.Guesses,
 		MaxGuesses: game.MaxGuesses,
+		Players:    GetPlayerNames(game.Players),
 	}
+
 	c.JSON(200, gameResponse)
 
 }

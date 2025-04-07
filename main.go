@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-
 func main() {
 
 	// gin.SetMode(gin.ReleaseMode)
@@ -14,6 +13,7 @@ func main() {
 	router := gin.Default()
 
 	router.POST("/game", game.CreateGameHandler)
+	router.PUT("/game/:id/join", game.JoinGameHandler) // /game/:id/join?player=John_Doe
 	router.GET("/game/:id", game.FindGameHandler)
 	router.POST("/game/:id/guess", game.MakeGuessHandler)
 

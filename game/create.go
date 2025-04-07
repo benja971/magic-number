@@ -1,6 +1,7 @@
 package game
 
 import (
+	"example/guess_number/player"
 	"fmt"
 	"math/rand/v2"
 
@@ -9,7 +10,8 @@ import (
 )
 
 type CreateGameRequest struct {
-	MaxGuesses int `json:"max_guesses"`
+	MaxGuesses int    `json:"max_guesses"`
+	Player     string `json:"player"`
 }
 
 func CreateGameHandler(c *gin.Context) {
@@ -25,8 +27,8 @@ func CreateGameHandler(c *gin.Context) {
 	game := Game{
 		ID:         uuid.New(),
 		Goal:       rand.IntN(100) + 1, // Random number between 1 and 100
-		Guesses:    []int{},
 		MaxGuesses: body.MaxGuesses,
+		Players:    []player.Player{{Name: body.Player, Guesses: []int{}}},
 	}
 
 	games = append(games, game)
@@ -35,8 +37,8 @@ func CreateGameHandler(c *gin.Context) {
 
 	gameResponse := GameResponse{
 		ID:         game.ID,
-		Guesses:    game.Guesses,
 		MaxGuesses: game.MaxGuesses,
+		Players:    GetPlayerNames(game.Players),
 	}
 
 	c.JSON(200, gameResponse)

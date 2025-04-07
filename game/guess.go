@@ -1,14 +1,15 @@
 package game
 
 import (
-	"fmt"
+	"example/guess_number/player"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type GuessRequest struct {
-	Guess int `json:"guess"`
+	Guess  int    `json:"guess"`
+	Player string `json:"player"`
 }
 
 type GuessResponse struct {
@@ -36,8 +37,10 @@ func MakeGuessHandler(c *gin.Context) {
 		return
 	}
 
-	if game.IsOver() {
-		c.JSON(400, gin.H{"error": "Game is over"})
+	currentPlayer, found := player.FindPlayer(&game.Players, guessRequest.Player)
+
+	if !found {
+		c.JSON(404, gin.H{"error": "Player not found"})
 		return
 	}
 
@@ -46,25 +49,28 @@ func MakeGuessHandler(c *gin.Context) {
 		return
 	}
 
-	if game.IsGuessAlreadyMade(guessRequest.Guess) {
+	remainingGuesses := game.GetRemainingGuesses(currentPlayer)
+
+	if game.HasPlayerWon(currentPlayer) {
+		c.JSON(200, gin.H{"message": "You have already won!", "remaining_guesses": remainingGuesses})
+		return
+	}
+
+	if currentPlayer.IsGuessAlreadyMade(guessRequest.Guess) {
 		c.JSON(400, gin.H{"error": "Guess already made"})
 		return
 	}
 
-	game.AppendGuess(guessRequest.Guess)
-	fmt.Println("Guesses so far:", game.Guesses)
-	fmt.Println("Guess made:", guessRequest.Guess)
-	remainingGuesses := game.MaxGuesses - len(game.Guesses)
+	currentPlayer.AppendGuess(guessRequest.Guess)
+	remainingGuesses = game.GetRemainingGuesses(currentPlayer)
 
-	if game.IsWon() {
+	if game.IsCorrectGuess(guessRequest.Guess) {
 		c.JSON(200, gin.H{"message": "Congratulations! You guessed the number!", "remaining_guesses": remainingGuesses})
-		games, _ = DeleteGame(games, game.ID)
 		return
 	}
 
-	if game.IsLost() {
-		c.JSON(200, gin.H{"message": "Game over! You lost!", "remaining_guesses": 0})
-		games, _ = DeleteGame(games, game.ID)
+	if game.HasPlayerLost(currentPlayer) {
+		c.JSON(200, gin.H{"message": "Game over! You lost!", "remaining_guesses": remainingGuesses})
 		return
 	}
 
